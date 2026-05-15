@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dergi.vosb.k12.tr/sitemap-index.xml

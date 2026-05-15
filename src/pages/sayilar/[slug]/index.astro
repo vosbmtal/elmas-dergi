@@ -1,0 +1,463 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import Flipbook from "~/components/Flipbook.astro";
+import {
+  formatTurkishMonthYear,
+  listIssues,
+  loadIssue,
+  ogImageUrl,
+} from "~/lib/issues";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const issues = await listIssues();
+  return issues.map((i) => ({ params: { slug: i.meta.slug } }));
+}
+
+const { slug } = Astro.params;
+const issue = await loadIssue(slug!);
+
+if (!issue) {
+  return Astro.redirect("/404");
+}
+if (!issue.hasAssets || !issue.manifest) {
+  return Astro.redirect("/404");
+}
+
+const { meta, manifest } = issue;
+
+const highlightSentence =
+  meta.highlights.length > 0
+    ? meta.highlights.slice(0, 3).join(", ")
+    : meta.summary;
+const description = `${meta.title} — ELMAS dergisinin ${
+  meta.issueNumber === 1 ? "ilk" : `${meta.issueNumber}.`
+} sayısı. ${highlightSentence}. Veliköy OSB MTAL öğrencilerinden.`;
+
+const siteUrl = "https://dergi.vosb.k12.tr";
+const ogImage = ogImageUrl(meta.slug);
+const pdfUrl = `/sayilar/${meta.slug}/source.pdf`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "PublicationIssue",
+  issueNumber: meta.issueNumber,
+  datePublished: meta.publishedAt,
+  name: meta.title,
+  description: meta.summary,
+  url: new URL(`/sayilar/${meta.slug}`, siteUrl).toString(),
+  image: new URL(ogImage, siteUrl).toString(),
+  inLanguage: "tr-TR",
+  pageStart: 1,
+  pageEnd: manifest.pageCount,
+  keywords: meta.highlights.join(", "),
+  isPartOf: {
+    "@type": "Periodical",
+    name: "ELMAS Dergisi",
+    issn: undefined,
+    publisher: {
+      "@type": "EducationalOrganization",
+      name: "Veliköy OSB Mesleki ve Teknik Anadolu Lisesi",
+      alternateName: "Veliköy OSB MTAL",
+      url: "https://velikoyosb.meb.k12.tr",
+    },
+  },
+  ...(meta.editors.length > 0 && {
+    editor: meta.editors.map((name) => ({ "@type": "Person", name })),
+  }),
+  ...(meta.students.length > 0 && {
+    contributor: meta.students.map((name) => ({ "@type": "Person", name })),
+  }),
+};
+---
+
+<BaseLayout
+  title={`${meta.title} · ELMAS Dergisi · Sayı ${meta.issueNumber}`}
+  description={description}
+  ogImage={ogImage}
+  type="article"
+>
+  <script
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(jsonLd)}
+  />
+
+  {/* DearFlip kütüphane dosyaları (CC BY-NC-ND 4.0) */}
+  <link rel="stylesheet" href="/dflip/css/dflip.min.css" />
+  <link rel="stylesheet" href="/dflip/css/themify-icons.min.css" />
+  <script is:inline src="/dflip/js/libs/jquery.min.js"></script>
+  <script is:inline src="/dflip/js/libs/three.min.js"></script>
+  <script is:inline src="/dflip/js/libs/mockup.min.js"></script>
+  <script is:inline src="/dflip/js/libs/pdf.min.js"></script>
+  <script is:inline src="/dflip/js/dflip.min.js"></script>
+
+  {/* Okuma modu — tüm viewport dergiye odaklı, sayfa scroll yok */}
+  <style is:global>
+    html, body {
+      overflow: hidden;
+      height: 100%;
+    }
+    body {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    body > main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    body > footer {
+      display: none;
+    }
+
+    /* DearFlip UI: magazin temasına uydur */
+    .df-ui {
+      font-family: var(--font-sans) !important;
+    }
+    .df-container {
+      background: transparent !important;
+    }
+  </style>
+
+  <div class="issue-bar">
+    <div class="issue-bar__meta">
+      <span class="issue-bar__eyebrow">
+        Sayı {meta.issueNumber} · {formatTurkishMonthYear(meta.publishedAt)}
+      </span>
+      <h1 class="issue-bar__title">{meta.title}</h1>
+    </div>
+
+    <div class="issue-bar__actions">
+      <button
+        type="button"
+        class="issue-bar__btn"
+        id="text-view-toggle"
+        aria-pressed="false"
+        aria-label="Metin görünümü"
+        title="Metin görünümü"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-4 h-4">
+          <path d="M5 6h14M5 12h14M5 18h10" stroke-linecap="round"/>
+        </svg>
+        <span class="issue-bar__btn-label">Metin</span>
+      </button>
+
+      <a class="issue-bar__btn" href={pdfUrl} download aria-label="PDF indir" title="PDF indir">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-4 h-4">
+          <path d="M12 4v12m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="issue-bar__btn-label">PDF</span>
+      </a>
+
+      <button
+        type="button"
+        class="issue-bar__btn"
+        id="share-btn"
+        aria-label="Paylaş"
+        title="Paylaş"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="w-4 h-4">
+          <circle cx="6" cy="12" r="2.5"/>
+          <circle cx="18" cy="5" r="2.5"/>
+          <circle cx="18" cy="19" r="2.5"/>
+          <path d="m8.5 11 7-4M8.5 13l7 4" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      {(meta.highlights.length > 0 || meta.students.length > 0) && (
+        <details class="issue-bar__details">
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-4 h-4">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 8v8M12 16h.01" stroke-linecap="round"/>
+            </svg>
+            <span class="issue-bar__btn-label">Bu sayıda</span>
+          </summary>
+          <div class="issue-bar__panel">
+            <p class="issue-bar__summary">{meta.summary}</p>
+            {meta.highlights.length > 0 && (
+              <ul>
+                {meta.highlights.map((h) => (
+                  <li>{h}</li>
+                ))}
+              </ul>
+            )}
+            {meta.students.length > 0 && (
+              <div class="issue-bar__credits">
+                <p class="issue-bar__credits-label">Öğrenci Ekibi</p>
+                <p class="issue-bar__credits-names">
+                  {meta.students.join(" · ")}
+                </p>
+              </div>
+            )}
+          </div>
+        </details>
+      )}
+    </div>
+  </div>
+
+  <Flipbook manifest={manifest} />
+
+  <div id="share-toast" class="share-toast" role="status" aria-live="polite"></div>
+</BaseLayout>
+
+<script>
+  // Sade controls handler — DearFlip kendi navigation/zoom/fullscreen/sound'u sağlar.
+  // Burada: text view toggle + share (Web Share API + clipboard fallback)
+  const textBtn = document.getElementById("text-view-toggle");
+  const textView = document.getElementById("text-view");
+  const stage = document.getElementById("flipbook-stage");
+  const shareBtn = document.getElementById("share-btn");
+  const toast = document.getElementById("share-toast");
+
+  if (textBtn && textView && stage) {
+    textBtn.addEventListener("click", () => {
+      const isVisible = !textView.classList.contains("is-visible");
+      textView.classList.toggle("is-visible", isVisible);
+      textView.style.display = isVisible ? "block" : "none";
+      textView.setAttribute("aria-hidden", isVisible ? "false" : "true");
+      textBtn.setAttribute("aria-pressed", isVisible ? "true" : "false");
+      stage.style.display = isVisible ? "none" : "";
+    });
+  }
+
+  function showToast(msg: string) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.add("is-visible");
+    setTimeout(() => toast.classList.remove("is-visible"), 2200);
+  }
+
+  shareBtn?.addEventListener("click", async () => {
+    const url = new URL(window.location.href);
+    const shareData = {
+      title: document.title,
+      text: "ELMAS dergisini inceleyin:",
+      url: url.toString(),
+    };
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch {
+      // user cancelled
+    }
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      showToast("Bağlantı kopyalandı");
+    } catch {
+      showToast("Bağlantı kopyalanamadı");
+    }
+  });
+</script>
+
+<style>
+  .issue-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem clamp(1rem, 4vw, 2rem);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 6%, transparent);
+    background: var(--color-paper);
+    position: relative;
+    z-index: 30;
+  }
+
+  .issue-bar__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .issue-bar__eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-green-700);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .issue-bar__title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    line-height: 1;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .issue-bar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .issue-bar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+    background: white;
+    color: var(--color-ink-2);
+    font-size: 0.78rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .issue-bar__btn:hover {
+    background: color-mix(in oklab, var(--color-green-800) 6%, white);
+    color: var(--color-ink);
+  }
+  .issue-bar__btn:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+  .issue-bar__btn[aria-pressed="true"] {
+    background: var(--color-green-800);
+    color: var(--color-silver-100);
+    border-color: var(--color-green-800);
+  }
+
+  .issue-bar__details {
+    position: relative;
+  }
+  .issue-bar__details summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+    background: white;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-ink-2);
+    transition: background 0.15s;
+  }
+  .issue-bar__details summary::-webkit-details-marker { display: none; }
+  .issue-bar__details summary:hover {
+    background: color-mix(in oklab, var(--color-green-800) 6%, white);
+  }
+  .issue-bar__details[open] summary {
+    background: var(--color-green-800);
+    color: var(--color-silver-100);
+    border-color: var(--color-green-800);
+  }
+  .issue-bar__panel {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    min-width: 280px;
+    max-width: 380px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card-lg);
+    padding: 1.1rem 1.25rem;
+    z-index: 40;
+  }
+  .issue-bar__summary {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+    margin: 0;
+  }
+  .issue-bar__panel ul {
+    margin-top: 0.85rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.4rem;
+  }
+  .issue-bar__panel li {
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+    padding-left: 0.85rem;
+    position: relative;
+  }
+  .issue-bar__panel li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55rem;
+    width: 4px;
+    height: 4px;
+    background: var(--color-green-700);
+    border-radius: 50%;
+  }
+  .issue-bar__credits {
+    margin-top: 0.95rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+  }
+  .issue-bar__credits-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-green-700);
+    font-weight: 600;
+    margin: 0;
+  }
+  .issue-bar__credits-names {
+    margin: 0.3rem 0 0;
+    font-size: 0.82rem;
+    color: var(--color-ink-2);
+  }
+
+  /* Share toast */
+  .share-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 5rem;
+    transform: translateX(-50%) translateY(80%);
+    padding: 0.65rem 1.1rem;
+    background: var(--color-green-800);
+    color: var(--color-silver-100);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 50;
+  }
+  .share-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  @media (max-width: 640px) {
+    .issue-bar__title {
+      font-size: 0.95rem;
+    }
+    .issue-bar__btn-label {
+      display: none;
+    }
+    .issue-bar__btn,
+    .issue-bar__details summary {
+      padding: 0.45rem;
+    }
+    .issue-bar__panel {
+      right: -0.5rem;
+      max-width: calc(100vw - 2rem);
+    }
+  }
+</style>

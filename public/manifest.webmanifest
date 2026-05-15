@@ -1,0 +1,20 @@
+{
+  "name": "ELMAS Dergisi · Veliköy OSB MTAL",
+  "short_name": "ELMAS",
+  "description": "Çerkezköy Veliköy OSB MTAL'in aylık okul dergisi — eğitim, üretim ve teknoloji odaklı içerikler.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e2a1f",
+  "theme_color": "#1a3d2e",
+  "lang": "tr-TR",
+  "categories": ["education", "magazines", "news"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

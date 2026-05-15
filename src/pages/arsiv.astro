@@ -1,0 +1,37 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import IssueCard from "~/components/IssueCard.astro";
+import { listIssues } from "~/lib/issues";
+
+export const prerender = true;
+
+const issues = await listIssues();
+const description =
+  "Veliköy OSB MTAL'in okul dergisi ELMAS'ın tüm sayılarına buradan ulaşın. Her sayıyı çevrimiçi okuyabilir ya da PDF olarak indirebilirsiniz.";
+---
+
+<BaseLayout
+  title="Arşiv · ELMAS Dergisi · Tüm Sayılar"
+  description={description}
+>
+  <section class="container-prose py-14 sm:py-20">
+    <p class="text-xs uppercase tracking-[0.24em] text-green-700">Tüm Sayılar</p>
+    <h1 class="text-display mt-3 text-4xl font-black sm:text-5xl">ELMAS Dergisi Arşivi</h1>
+    <p class="mt-4 max-w-2xl text-ink-2">
+      ELMAS dergisinin geçmiş sayılarına buradan ulaşabilirsiniz. Her sayıyı
+      çevrimiçi okuyabilir ya da PDF olarak indirebilirsiniz.
+    </p>
+
+    {issues.length === 0 ? (
+      <p class="mt-12 rounded-2xl bg-paper-2 p-12 text-center text-ink-2">
+        Yakında yeni sayılar yayınlanacak.
+      </p>
+    ) : (
+      <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {issues.map((issue) => (
+          <IssueCard issue={issue} />
+        ))}
+      </div>
+    )}
+  </section>
+</BaseLayout>

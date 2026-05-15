@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+@theme {
+  /* ELMAS magazin renk paleti — kapak: koyu orman yeşili + gümüş/beyaz */
+  --color-ink: #0e1a14;
+  --color-ink-2: #2a3a32;
+  --color-green-950: #0a1f17;
+  --color-green-900: #0e2a1f;
+  --color-green-800: #1a3d2e;
+  --color-green-700: #2a5a45;
+  --color-green-600: #3a7559;
+  --color-green-500: #4a9270;
+  --color-green-400: #6cb594;
+  --color-silver-100: #f5f8f9;
+  --color-silver-200: #e8eef0;
+  --color-silver-300: #c4d0d3;
+  --color-silver-400: #94a4a8;
+  --color-gold: #c9a961;
+  --color-gold-dark: #a88a3f;
+  --color-paper: #fafaf7;
+  --color-paper-2: #f0ede4;
+  --color-danger: #b54232;
+
+  /* Magazin tipografisi */
+  --font-display: "Playfair Display", "Times New Roman", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Yumuşak gölgeler */
+  --shadow-card: 0 1px 2px rgb(14 26 20 / 0.04), 0 4px 12px rgb(14 26 20 / 0.06);
+  --shadow-card-lg: 0 8px 32px rgb(14 26 20 / 0.12), 0 2px 8px rgb(14 26 20 / 0.08);
+  --shadow-book: 0 25px 50px -12px rgb(0 0 0 / 0.45);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  }
+
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background: var(--color-green-800);
+    color: var(--color-silver-100);
+  }
+
+  a {
+    color: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .container-prose {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .container-narrow {
+    @apply mx-auto w-full max-w-3xl px-5 sm:px-8;
+  }
+
+  /* Magazin kapağına uygun gradient hero */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 20%, color-mix(in oklab, var(--color-green-700) 60%, transparent), transparent 70%),
+      linear-gradient(180deg, var(--color-green-900) 0%, var(--color-green-950) 100%);
+  }
+
+  /* Kapak yansıması */
+  .cover-glow {
+    box-shadow:
+      0 30px 60px -15px rgba(0, 0, 0, 0.6),
+      0 18px 32px -8px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  }
+
+  /* Etiket / chip */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-current/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em];
+  }
+
+  /* Kart */
+  .card {
+    @apply rounded-2xl bg-white p-6 transition;
+    box-shadow: var(--shadow-card);
+  }
+  .card:hover {
+    box-shadow: var(--shadow-card-lg);
+  }
+
+  /* Buton primary */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] transition;
+    background: var(--color-green-800);
+    color: var(--color-silver-100);
+  }
+  .btn-primary:hover {
+    background: var(--color-green-700);
+    transform: translateY(-1px);
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-current/20 px-5 py-2.5 text-sm font-medium transition;
+  }
+  .btn-ghost:hover {
+    background: color-mix(in oklab, currentColor 8%, transparent);
+  }
+
+  /* Magazin görselleştirmeler */
+  .display-divider {
+    @apply relative my-8 flex items-center gap-4 text-xs uppercase tracking-[0.32em];
+    color: var(--color-silver-400);
+  }
+  .display-divider::before,
+  .display-divider::after {
+    content: "";
+    @apply h-px flex-1;
+    background: currentColor;
+    opacity: 0.4;
+  }
+}
+
+@layer utilities {
+  .text-display {
+    font-family: var(--font-display);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* Flipbook viewer custom CSS (page-flip kütüphanesinin styling'i */
+.flipbook-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flipbook-stage .stf__parent {
+  margin: 0 auto;
+}
+
+.flipbook-stage .stf__block {
+  box-shadow: var(--shadow-book);
+  border-radius: 2px;
+}
+
+.flipbook-page {
+  background: var(--color-paper);
+  overflow: hidden;
+}
+
+.flipbook-page picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.flipbook-page img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: var(--color-paper);
+  /* Browser DPR-aware image rendering — retina ekranda crisp text */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* sr-only utility (Tailwind v4 zaten sağlıyor ama emin olalım) */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

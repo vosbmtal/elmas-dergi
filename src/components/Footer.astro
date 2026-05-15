@@ -1,0 +1,61 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-24 border-t border-ink/10 bg-green-950 text-silver-200">
+  <div class="container-prose grid gap-12 py-14 md:grid-cols-3">
+    <div>
+      <p class="text-display text-2xl font-black tracking-tight text-silver-100">ELMAS</p>
+      <p class="mt-2 text-sm leading-relaxed text-silver-300">
+        Veliköy OSB Mesleki ve Teknik Anadolu Lisesi'nin aylık dergisi.
+        İlham veren fikirler, güçlü yarınlar.
+      </p>
+      <p class="mt-4 text-[10px] uppercase tracking-[0.24em] text-silver-400">
+        Eğitim · Sanayi · Kültür · Gelecek
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-silver-100">İletişim</h3>
+      <address class="mt-4 space-y-2 text-sm not-italic leading-relaxed text-silver-300">
+        <p>Veliköy OSB Mahallesi</p>
+        <p>12. Cadde No: 6/1</p>
+        <p>Çerkezköy / Tekirdağ</p>
+        <p>
+          <a href="tel:+905422275962" class="transition hover:text-silver-100">
+            0 542 227 59 62
+          </a>
+        </p>
+        <p>
+          <a
+            href="https://velikoyosb.meb.k12.tr"
+            target="_blank"
+            rel="noopener"
+            class="underline-offset-4 transition hover:text-silver-100 hover:underline"
+          >
+            velikoyosb.meb.k12.tr
+          </a>
+        </p>
+      </address>
+    </div>
+
+    <div>
+      <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-silver-100">Site</h3>
+      <ul class="mt-4 space-y-2 text-sm text-silver-300">
+        <li><a href="/" class="transition hover:text-silver-100">Anasayfa</a></li>
+        <li><a href="/arsiv" class="transition hover:text-silver-100">Tüm Sayılar</a></li>
+        <li><a href="/hakkimizda" class="transition hover:text-silver-100">Hakkımızda</a></li>
+        <li>
+          <a href="/sitemap-index.xml" class="transition hover:text-silver-100">Site Haritası</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-white/5">
+    <div class="container-prose flex flex-col items-start justify-between gap-3 py-5 text-xs text-silver-400 sm:flex-row sm:items-center">
+      <p>© {year} Veliköy OSB Mesleki ve Teknik Anadolu Lisesi. Tüm hakları saklıdır.</p>
+      <p>T.C. Millî Eğitim Bakanlığı'na bağlıdır.</p>
+    </div>
+  </div>
+</footer>

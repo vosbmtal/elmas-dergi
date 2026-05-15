@@ -1,0 +1,53 @@
+---
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/" ? path === "/" : path.startsWith(href);
+
+const navItems = [
+  { href: "/", label: "Anasayfa" },
+  { href: "/arsiv", label: "Arşiv" },
+  { href: "/hakkimizda", label: "Hakkımızda" },
+];
+---
+
+<header class="sticky top-0 z-40 border-b border-ink/5 bg-paper/85 backdrop-blur-md">
+  <div class="container-prose flex h-16 items-center justify-between gap-4">
+    <a href="/" class="group flex items-center gap-3" aria-label="ELMAS Dergisi anasayfa">
+      <span
+        class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-800 text-silver-100 transition group-hover:bg-green-700"
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" stroke="currentColor" stroke-width="1.6">
+          <path d="M12 2 4 9l8 13 8-13z" stroke-linejoin="round" />
+          <path d="M4 9h16M9 9l3 13M15 9l-3 13" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <span class="flex flex-col leading-tight">
+        <span class="text-display text-lg font-black tracking-tight text-ink">ELMAS</span>
+        <span class="text-[10px] uppercase tracking-[0.22em] text-ink-2">Veliköy OSB MTAL</span>
+      </span>
+    </a>
+
+    <nav aria-label="Site gezintisi">
+      <ul class="flex items-center gap-1 sm:gap-2">
+        {navItems.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              class:list={[
+                "rounded-full px-3 py-2 text-sm font-medium transition",
+                "hover:bg-green-800/8",
+                isActive(item.href)
+                  ? "bg-green-800 text-silver-100 hover:bg-green-800"
+                  : "text-ink-2 hover:text-ink",
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,114 @@
+---
+import "~/styles/global.css";
+import Header from "~/components/Header.astro";
+import Footer from "~/components/Footer.astro";
+import SeoMeta from "~/components/SeoMeta.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  type?: "website" | "article";
+  noIndex?: boolean;
+}
+
+const {
+  title,
+  description = "Çerkezköy Veliköy OSB Mesleki ve Teknik Anadolu Lisesi'nin aylık dergisi ELMAS. Eğitim, sanayi, kültür ve gelecek odaklı öğrenci çalışmaları her ay yayında.",
+  ogImage,
+  canonicalUrl,
+  type = "website",
+  noIndex = false,
+} = Astro.props;
+
+const siteUrl = "https://dergi.vosb.k12.tr";
+const canonical = canonicalUrl ?? new URL(Astro.url.pathname, siteUrl).toString();
+const fullTitle = title.includes("ELMAS") ? title : `${title} · ELMAS Dergisi`;
+
+// Global EducationalOrganization JSON-LD — her sayfada, E-E-A-T + yerel SEO
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: "Veliköy OSB Mesleki ve Teknik Anadolu Lisesi",
+  alternateName: "Veliköy OSB MTAL",
+  url: "https://velikoyosb.meb.k12.tr",
+  logo: `${siteUrl}/favicon.svg`,
+  sameAs: [siteUrl],
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Veliköy OSB Mahallesi, 12. Cadde No: 6/1",
+    addressLocality: "Çerkezköy",
+    addressRegion: "Tekirdağ",
+    addressCountry: "TR",
+  },
+  telephone: "+90-542-227-5962",
+  parentOrganization: {
+    "@type": "GovernmentOrganization",
+    name: "T.C. Millî Eğitim Bakanlığı",
+  },
+  publishingPrinciples: `${siteUrl}/hakkimizda`,
+};
+---
+
+<!doctype html>
+<html lang="tr" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#1a3d2e" />
+    <meta name="color-scheme" content="light" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;900&display=swap&subset=latin-ext"
+    />
+
+    <SeoMeta
+      title={fullTitle}
+      description={description}
+      ogImage={ogImage}
+      canonical={canonical}
+      type={type}
+      noIndex={noIndex}
+    />
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(orgSchema)}
+    />
+
+    {/* Cloudflare Web Analytics — cookieless, KVKK uyumlu. Token deploy sonrası
+        dashboard'dan alınıp PUBLIC_CF_ANALYTICS_TOKEN olarak set edilebilir. */}
+    {import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN}"}`}
+      />
+    )}
+  </head>
+  <body class="bg-paper text-ink antialiased">
+    <a
+      href="#icerik"
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-green-800 focus:px-4 focus:py-2 focus:text-silver-100"
+    >
+      İçeriğe atla
+    </a>
+    <Header />
+    <main id="icerik" class="min-h-[60vh]">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

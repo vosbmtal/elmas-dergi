@@ -1,0 +1,28 @@
+name = "elmas-dergi"
+main = "./dist/_worker.js/index.js"
+account_id = "6bce1ffb042bcfffe0c35b914b969a26"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Astro Cloudflare adapter çıktısını static asset olarak servis et
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# Orijinal PDF dosyaları R2'de
+[[r2_buckets]]
+binding = "PDFS"
+bucket_name = "elmas-dergi-pdfs"
+
+# Custom domain — DNS kaydını ve SSL'i Cloudflare otomatik kuracak
+[[routes]]
+pattern = "dergi.vosb.k12.tr"
+custom_domain = true
+
+[observability]
+enabled = true
+
+# Public env varları (gerekirse)
+[vars]
+PUBLIC_SITE_URL = "https://dergi.vosb.k12.tr"

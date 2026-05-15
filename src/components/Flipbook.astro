@@ -1,0 +1,325 @@
+---
+import type { IssueManifest } from "~/lib/issues";
+import { issueAssetUrl, loadPageText } from "~/lib/issues";
+
+interface Props {
+  manifest: IssueManifest;
+}
+
+const { manifest } = Astro.props;
+
+// Sayfa metinlerini server-side oku — sr-only erişilebilirlik + text-view toggle
+const pageTexts = await Promise.all(
+  manifest.pages.map((p) => loadPageText(manifest.slug, p.index)),
+);
+
+const clientPages = manifest.pages.map((p) => issueAssetUrl(manifest.slug, p.webp));
+---
+
+<section
+  class="flipbook-viewer"
+  data-page-count={manifest.pageCount}
+  data-slug={manifest.slug}
+  aria-label={`${manifest.title} dergisi`}
+>
+  <div class="flipbook-stage" id="flipbook-stage">
+    {/* class="_df_book" KOYULMADI — auto-init istemiyoruz, manuel JS init yapacağız */}
+    <div
+      class="df-elmas"
+      id="elmas-flipbook"
+      data-pages={JSON.stringify(clientPages)}
+      data-page-count={manifest.pageCount}
+    ></div>
+  </div>
+
+  {/* Metin görünümü — toggle ile aç-kapa */}
+  <div
+    id="text-view"
+    class="text-view"
+    style="display:none;"
+    aria-hidden="true"
+    aria-label="Dergi metin sürümü"
+  >
+    {manifest.pages.map((p, i) => (
+      <article id={`metin-sayfa-${p.index}`} class="text-page">
+        <header class="text-page-header">
+          <span>Sayfa {p.index} / {manifest.pageCount}</span>
+        </header>
+        <pre>{pageTexts[i]}</pre>
+      </article>
+    ))}
+  </div>
+
+  {/* Ekran okuyucu için sürekli erişilebilir kopya */}
+  <div class="sr-only" aria-live="polite">
+    <h2>Dergi içeriği — metin sürümü</h2>
+    {manifest.pages.map((p, i) => (
+      <article aria-label={`Sayfa ${p.index}`}>
+        <h3>Sayfa {p.index}</h3>
+        <pre>{pageTexts[i]}</pre>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .flipbook-viewer {
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .flipbook-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-green-900) 4%, var(--color-paper)),
+      var(--color-paper-2)
+    );
+    position: relative;
+  }
+
+  /* DearFlip container'ı stage'i doldurmalı; height JS ile px olarak set edilir */
+  #elmas-flipbook {
+    width: 100%;
+    min-height: 400px;
+    max-height: 100%;
+  }
+
+  /* Magazin estetiğine uygun: ELMAS yeşili arkaplan + paper-renkli sayfa kenarı */
+  .flipbook-stage :global(.df-container) {
+    background: transparent !important;
+  }
+
+  /* Metin görünümü */
+  .text-view {
+    max-width: 64ch;
+    margin: 2rem auto;
+    padding: 0 1.25rem;
+    color: var(--color-ink);
+  }
+  .text-page {
+    border-top: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+    padding: 1.75rem 0;
+  }
+  .text-page:first-child {
+    border-top: none;
+  }
+  .text-page-header {
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-ink-2);
+    opacity: 0.7;
+    margin-bottom: 0.75rem;
+  }
+  .text-page pre {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+</style>
+
+<script is:inline>
+  // DearFlip global config — script yüklenmeden önce set edilmeli
+  window.option_dflip = {
+    height: "auto",
+    duration: 800,
+    backgroundColor: "transparent",
+    soundEnable: true,
+    autoEnableOutline: false,
+    autoEnableThumbnail: false,
+    enableDownload: false,
+    enableAnnotation: false,
+    enableShare: false,
+    pageSize: 0, // 0 = AUTO (mobilde tek sayfa, desktop'ta spread)
+    paddingV: 10,
+    paddingH: 20,
+    text: {
+      toggleSound: "Sesi aç/kapat",
+      toggleThumbnails: "Küçük resimler",
+      toggleOutline: "İçerik tablosu",
+      previousPage: "Önceki sayfa",
+      nextPage: "Sonraki sayfa",
+      toggleFullscreen: "Tam ekran",
+      zoomIn: "Yakınlaştır",
+      zoomOut: "Uzaklaştır",
+      share: "Paylaş",
+      downloadPDF: "PDF indir",
+      gotoPage: "Sayfaya git",
+      loading: "Yükleniyor",
+    },
+  };
+</script>
+
+<script>
+  // DearFlip wrapper: kendi global API'mizi DearFlip instance'a bağla
+  declare global {
+    interface Window {
+      jQuery: any;
+      $: any;
+      DFLIP: any;
+      option_dflip: Record<string, unknown>;
+      __elmasFlipbook: {
+        flip: (n: number) => void;
+        flipNext: () => void;
+        flipPrev: () => void;
+        getPageCount: () => number;
+        getCurrentPageIndex: () => number;
+      };
+    }
+  }
+
+  function whenReady(cb: () => void) {
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      setTimeout(cb, 0);
+    } else {
+      document.addEventListener("DOMContentLoaded", cb, { once: true });
+    }
+  }
+
+  whenReady(() => {
+    const container = document.getElementById("elmas-flipbook");
+    if (!container) return;
+    const pageCount = Number(container.getAttribute("data-page-count"));
+    const pagesStr = container.getAttribute("data-pages");
+    let pages: string[] = [];
+    try {
+      pages = JSON.parse(pagesStr ?? "[]");
+    } catch {
+      console.error("Flipbook: pages parse hatası");
+      return;
+    }
+
+    // Stage'in gerçek pixel yüksekliğini hesapla — DearFlip 'auto' verince
+    // container'ı çok büyük yapıyor ve controls clipping oluyor.
+    const stage = document.getElementById("flipbook-stage");
+    const computeHeight = () => {
+      const h = stage?.clientHeight ?? container.clientHeight ?? 600;
+      return Math.max(400, h);
+    };
+
+    // DearFlip + Three.js + jQuery hazır olana kadar bekle
+    const initWhenReady = () => {
+      const $ = (window as any).jQuery;
+      if (!$ || !$.fn?.flipBook || !(window as any).THREE) {
+        return false;
+      }
+      try {
+        $(container).flipBook(pages, {
+          height: computeHeight(),
+          duration: 800,
+          soundEnable: true,
+          backgroundColor: "transparent",
+          enableDownload: false,
+          enableShare: false,
+          enableAnnotation: false,
+          autoEnableOutline: false,
+          autoEnableThumbnail: false,
+          pageSize: 0,
+          webgl: true,
+          forceFit: true,
+        });
+
+        // Viewport resize'da DearFlip'in resize hook'unu tetikle
+        const onResize = () => {
+          const inst = getInstance();
+          if (inst?.target?.resize) {
+            try { inst.target.resize(); } catch {}
+          } else if (inst?.resize) {
+            try { inst.resize(); } catch {}
+          }
+          // Container'ın stilini parent'a güncelle
+          container.style.height = computeHeight() + "px";
+        };
+        let rt: number | undefined;
+        window.addEventListener("resize", () => {
+          clearTimeout(rt);
+          rt = window.setTimeout(onResize, 150);
+        });
+        return true;
+      } catch (err) {
+        console.error("DearFlip flipBook() init hatası:", err);
+        return false;
+      }
+    };
+
+    // Init poll
+    if (!initWhenReady()) {
+      const initIv = setInterval(() => {
+        if (initWhenReady()) clearInterval(initIv);
+      }, 100);
+      setTimeout(() => clearInterval(initIv), 8000);
+    }
+
+    const getInstance = () =>
+      (container as any).flipBookObj ||
+      (container as any)._flipBook ||
+      ((window as any).DFLIP?.flipbook && (window as any).DFLIP.flipbook[container.id]) ||
+      null;
+
+    const currentPage = () => {
+      const inst = getInstance();
+      if (!inst) return 1;
+      const idx = (inst.target_page ?? inst.currentPageIndex ?? 0) as number;
+      return idx + 1;
+    };
+
+    let lastPage = 1;
+    const pollPage = () => {
+      const inst = getInstance();
+      if (!inst) return;
+      const p = currentPage();
+      if (p !== lastPage) {
+        lastPage = p;
+        document.dispatchEvent(
+          new CustomEvent("flipbook:page-change", {
+            detail: { page: p, total: pageCount },
+          }),
+        );
+        history.replaceState(null, "", `#sayfa-${p}`);
+      }
+    };
+    setInterval(pollPage, 250);
+
+    // Deep link: #sayfa-N
+    const hash = location.hash.match(/^#sayfa-(\d+)$/);
+    if (hash) {
+      const n = parseInt(hash[1]!, 10);
+      if (n >= 1 && n <= pageCount) {
+        setTimeout(() => {
+          const inst = getInstance();
+          if (inst?.gotoPage) inst.gotoPage(n);
+        }, 1500);
+      }
+    }
+
+    // Global API
+    (window as any).__elmasFlipbook = {
+      flip: (n: number) => {
+        const inst = getInstance();
+        if (inst?.gotoPage) inst.gotoPage(n + 1);
+      },
+      flipNext: () => {
+        const inst = getInstance();
+        if (inst?.next) inst.next();
+      },
+      flipPrev: () => {
+        const inst = getInstance();
+        if (inst?.prev) inst.prev();
+      },
+      getPageCount: () => pageCount,
+      getCurrentPageIndex: () => currentPage() - 1,
+    };
+
+    document.dispatchEvent(
+      new CustomEvent("flipbook:ready", { detail: { total: pageCount } }),
+    );
+  });
+</script>

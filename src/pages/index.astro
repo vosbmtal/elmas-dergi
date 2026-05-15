@@ -1,0 +1,189 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+import IssueCard from "~/components/IssueCard.astro";
+import {
+  formatTurkishMonthYear,
+  issueAssetUrl,
+  issueUrl,
+  latestIssue,
+  listIssues,
+  ogImageUrl,
+} from "~/lib/issues";
+
+export const prerender = true;
+
+const latest = await latestIssue();
+const all = await listIssues();
+const others = all.filter((i) => i.meta.slug !== latest?.meta.slug).slice(0, 3);
+
+const description =
+  "Çerkezköy Veliköy OSB Mesleki ve Teknik Anadolu Lisesi'nin aylık dergisi ELMAS. Eğitim, sanayi, kültür ve gelecek odaklı öğrenci çalışmaları her ay yayında.";
+---
+
+<BaseLayout
+  title="ELMAS Dergisi · Veliköy OSB MTAL"
+  description={description}
+  ogImage={latest ? ogImageUrl(latest.meta.slug) : undefined}
+>
+  {latest && (
+    <section class="hero-gradient text-silver-100">
+      <div class="container-prose grid gap-12 py-16 sm:py-20 md:grid-cols-[1.1fr_1fr] lg:gap-20 lg:py-24">
+        <div class="order-2 flex flex-col justify-center md:order-1">
+          <p class="text-xs uppercase tracking-[0.28em] text-silver-300">
+            Eğitim · Sanayi · Kültür · Gelecek
+          </p>
+          <h1 class="text-display mt-4 text-5xl font-black leading-[0.95] tracking-tight text-silver-100 sm:text-6xl lg:text-7xl text-balance">
+            ELMAS
+          </h1>
+          <p class="mt-2 text-display text-2xl text-silver-200 sm:text-3xl">
+            İlham veren fikirler, güçlü yarınlar.
+          </p>
+          <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-silver-300">
+            <span class="rounded-full border border-silver-300/30 px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
+              Sayı {latest.meta.issueNumber}
+            </span>
+            <span class="rounded-full border border-silver-300/30 px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
+              {formatTurkishMonthYear(latest.meta.publishedAt)}
+            </span>
+            {latest.hasAssets && (
+              <span class="rounded-full border border-silver-300/30 px-3 py-1 text-[11px] uppercase tracking-[0.18em]">
+                {latest.manifest!.pageCount} Sayfa
+              </span>
+            )}
+          </div>
+          <p class="mt-6 max-w-xl text-base leading-relaxed text-silver-200 text-pretty">
+            {latest.meta.summary}
+          </p>
+          {latest.meta.highlights.length > 0 && (
+            <ul class="mt-7 space-y-2 text-sm text-silver-200">
+              {latest.meta.highlights.slice(0, 5).map((h) => (
+                <li class="flex items-start gap-3">
+                  <span
+                    class="mt-2 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold"
+                    aria-hidden="true"
+                  ></span>
+                  <span>{h}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div class="mt-9 flex flex-wrap items-center gap-4">
+            <a class="btn-primary" href={issueUrl(latest.meta.slug)}>
+              Okumaya Başla
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
+                <path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <a class="btn-ghost text-silver-200 border-silver-300/30" href="/arsiv">
+              Tüm Sayılar
+            </a>
+          </div>
+        </div>
+
+        <div class="order-1 flex items-center justify-center md:order-2">
+          {latest.hasAssets ? (
+            <a
+              href={issueUrl(latest.meta.slug)}
+              class="cover-glow group relative block w-full max-w-md overflow-hidden rounded-md transition hover:scale-[1.02]"
+              aria-label="Kapak — dergiyi aç"
+            >
+              <img
+                src={issueAssetUrl(latest.meta.slug, latest.manifest!.cover.thumb)}
+                alt={`${latest.meta.title} kapak`}
+                width="800"
+                height="1132"
+                class="block w-full"
+                fetchpriority="high"
+              />
+              <div
+                class="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/70 via-transparent to-transparent p-6 opacity-0 transition group-hover:opacity-100"
+              >
+                <span class="rounded-full bg-paper px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-green-900">
+                  Okumaya Başla →
+                </span>
+              </div>
+            </a>
+          ) : (
+            <div class="cover-glow flex aspect-[1/1.414] w-full max-w-md flex-col items-center justify-center rounded-md bg-green-950 text-silver-200">
+              <span class="text-display text-4xl font-black">ELMAS</span>
+              <span class="mt-2 text-xs uppercase tracking-[0.22em] text-silver-400">
+                Sayı {latest.meta.issueNumber}
+              </span>
+              <p class="mt-4 px-6 text-center text-xs text-silver-400">
+                Görseller henüz oluşturulmadı. <br />
+                <code class="text-silver-300">pnpm process:issue {latest.meta.slug}</code>
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {!latest && (
+    <section class="container-prose py-24 text-center">
+      <h1 class="text-display text-5xl font-black">ELMAS</h1>
+      <p class="mt-4 text-ink-2">Yakında yeni sayılar yayınlanacak.</p>
+    </section>
+  )}
+
+  {others.length > 0 && (
+    <section class="container-prose py-16 sm:py-20">
+      <div class="display-divider"><span>Geçmiş Sayılar</span></div>
+      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {others.map((issue) => (
+          <IssueCard issue={issue} />
+        ))}
+      </div>
+      <div class="mt-10 text-center">
+        <a href="/arsiv" class="btn-ghost">
+          Tüm Arşiv →
+        </a>
+      </div>
+    </section>
+  )}
+
+  <section class="bg-paper-2 py-16 sm:py-20">
+    <div class="container-prose grid gap-12 md:grid-cols-2 md:items-center">
+      <div>
+        <p class="text-xs uppercase tracking-[0.24em] text-green-700">Biz Kimiz?</p>
+        <h2 class="text-display mt-3 text-3xl sm:text-4xl text-balance">
+          Üreten Geleceğin Liselileri
+        </h2>
+        <p class="mt-5 leading-relaxed text-ink-2 text-pretty">
+          Veliköy OSB Mesleki ve Teknik Anadolu Lisesi, 2020 yılında eğitime başlayan
+          ve sanayinin ihtiyaç duyduğu nitelikli insan gücünü yetiştirmeyi amaçlayan
+          bir meslek lisesidir. Kimya, makine, metal, plastik ve otomasyon
+          alanlarında uygulamalı eğitim sunan okul; TÜBİTAK projeleri, TEKNOFEST
+          çalışmaları, Erasmus programları ve Goat Robot Takımı gibi faaliyetlerle
+          öğrencilerini geleceğe hazırlıyor.
+        </p>
+        <a class="btn-ghost mt-6" href="/hakkimizda">
+          Daha Fazla →
+        </a>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        <div class="card">
+          <p class="text-xs uppercase tracking-[0.16em] text-green-700">Mesleki</p>
+          <p class="mt-2 text-2xl font-bold">5 alan</p>
+          <p class="text-sm text-ink-2">Kimya, makine, metal, plastik, otomasyon</p>
+        </div>
+        <div class="card">
+          <p class="text-xs uppercase tracking-[0.16em] text-green-700">Robot Takımı</p>
+          <p class="mt-2 text-2xl font-bold">G.O.A.T 8092</p>
+          <p class="text-sm text-ink-2">FRC 2026 sezonu</p>
+        </div>
+        <div class="card">
+          <p class="text-xs uppercase tracking-[0.16em] text-green-700">Yayın</p>
+          <p class="mt-2 text-2xl font-bold">Aylık</p>
+          <p class="text-sm text-ink-2">İlk sayı: Nisan 2026</p>
+        </div>
+        <div class="card">
+          <p class="text-xs uppercase tracking-[0.16em] text-green-700">Konum</p>
+          <p class="mt-2 text-2xl font-bold">Çerkezköy</p>
+          <p class="text-sm text-ink-2">Tekirdağ</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
