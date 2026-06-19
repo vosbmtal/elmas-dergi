@@ -86,11 +86,11 @@ git add content/issues/2026-05.yaml docs/
 git commit -m "Mayıs 2026 sayısı eklendi"
 git push
 
-# Deploy
-pnpm deploy
+# Deploy (DİKKAT: `pnpm deploy` değil — pnpm'in rezerve komutuyla çakışır)
+pnpm run deploy
 ```
 
-`pnpm deploy` → `pnpm build` + `wrangler deploy` zincirleme çalışır. Build tüm sayıların görsellerini üretir, sonra Astro Cloudflare adapter'ı üzerinden Cloudflare Workers'a yüklenir. Custom domain `dergi.vosb.k12.tr` otomatik kullanılır.
+`pnpm run deploy` → `pnpm build` + `wrangler deploy` zincirleme çalışır. Build tüm sayıların görsellerini üretir, sonra Astro Cloudflare adapter'ı üzerinden Cloudflare Workers'a yüklenir. Custom domain `dergi.vosb.k12.tr` otomatik kullanılır.
 
 ## İlk kurulum (yeni bir makinede)
 
